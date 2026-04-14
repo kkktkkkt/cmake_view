@@ -1,0 +1,10 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Generated reports (run cmake_visualizer.py to regenerate)
+*_report.html
+single_test.html
+
+# Claude Code
+.claude/
