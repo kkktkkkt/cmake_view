@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CMake Report — F:\prog\cmake_view\myapp</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: ui-sans-serif, system-ui, sans-serif; background: #F8FAFC; color: #1E293B; }
+
+/* ---- header ---- */
+header { background: #1E293B; color: white; padding: 20px 28px 16px; }
+header h1 { font-size: 22px; font-weight: 700; letter-spacing: -.3px; }
+.subtitle { margin-top: 4px; font-size: 13px; color: #94A3B8; }
+.subtitle code { background: #334155; padding: 1px 5px; border-radius: 3px; color: #CBD5E1; }
+.stats { display: flex; gap: 16px; margin-top: 10px; }
+.stat { background: #334155; padding: 3px 10px; border-radius: 12px; font-size: 12px; color: #94A3B8; }
+
+/* ---- tab nav ---- */
+.tab-nav { display: flex; gap: 0; background: #F1F5F9; border-bottom: 1px solid #E2E8F0; padding: 0 20px; }
+.tab-btn {
+  padding: 11px 18px; font-size: 13px; font-weight: 500; border: none;
+  background: transparent; cursor: pointer; color: #64748B;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all .15s;
+}
+.tab-btn:hover { color: #1E293B; }
+.tab-btn.active { color: #3B82F6; border-bottom-color: #3B82F6; }
+
+/* ---- content ---- */
+main { padding: 20px 24px; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.empty { color: #94A3B8; font-style: italic; padding: 20px 0; }
+
+/* ---- graph toolbar ---- */
+.graph-toolbar {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;
+}
+.graph-toolbar button {
+  padding: 5px 16px; border: 1px solid #CBD5E1; border-radius: 7px;
+  background: white; cursor: pointer; font-size: 16px; color: #334155;
+  font-weight: 700; line-height: 1.3; transition: background .1s, border-color .1s, box-shadow .1s;
+  box-shadow: 0 1px 2px #0000000d;
+}
+.graph-toolbar button:hover { background: #F1F5F9; border-color: #94A3B8; }
+.graph-toolbar button:active { background: #E2E8F0; }
+.graph-toolbar .btn-reset { font-size: 12px; padding: 6px 14px; }
+.graph-hint { font-size: 12px; color: #94A3B8; margin-left: 6px; }
+.zoom-sep { width: 1px; height: 22px; background: #E2E8F0; margin: 0 4px; }
+
+/* ---- graph tab ---- */
+.graph-wrap {
+  background: white; border: 1px solid #E2E8F0; border-radius: 10px;
+  padding: 12px; overflow: hidden;
+}
+.node rect { transition: opacity .15s; }
+.node:hover rect { opacity: .85; }
+
+#node-detail {
+  margin-top: 16px; background: white; border: 1px solid #E2E8F0;
+  border-radius: 10px; padding: 18px 20px; position: relative;
+}
+#node-detail h3 { font-size: 16px; font-weight: 700; margin-bottom: 12px; font-family: ui-monospace, monospace; }
+#node-detail p { margin: 8px 0 4px; font-size: 13px; }
+#node-detail ul { margin: 4px 0 8px 16px; }
+#node-detail li { font-size: 13px; margin: 2px 0; }
+#node-detail code { background: #F1F5F9; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+.close-btn {
+  position: absolute; top: 12px; right: 14px; background: none; border: none;
+  font-size: 20px; cursor: pointer; color: #94A3B8; line-height: 1;
+}
+.close-btn:hover { color: #1E293B; }
+.hidden { display: none !important; }
+
+/* ---- file tree ---- */
+.filetree { background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px 20px; }
+.tree-root { list-style: none; }
+.tree-root ul { list-style: none; }
+.tree-dir, .tree-file { padding: 4px 0; font-size: 13px; }
+.tree-dir > ul { margin-top: 2px; }
+.dir-name { font-weight: 600; color: #334155; }
+.cmake-name { font-weight: 700; color: #3B82F6; font-family: ui-monospace, monospace; }
+.file-rel { color: #94A3B8; font-size: 12px; margin-left: 6px; }
+.icon-dir, .icon-cmake { margin-right: 5px; }
+
+/* ---- cards ---- */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.card {
+  background: white; border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden;
+}
+.card-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; background: #F8FAFC;
+}
+.card-title { font-weight: 700; font-family: ui-monospace, monospace; font-size: 14px; }
+.badge {
+  font-size: 11px; color: white; padding: 2px 8px; border-radius: 10px; font-weight: 600;
+}
+.src-list { list-style: none; padding: 10px 14px; }
+.src-list li { font-size: 12px; padding: 2px 0; }
+.src-list code { background: #F1F5F9; padding: 1px 5px; border-radius: 3px; }
+.no-src { padding: 10px 14px; color: #94A3B8; font-size: 13px; font-style: italic; }
+
+/* ---- include table ---- */
+.inc-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+.inc-tbl th { background: #F8FAFC; padding: 6px 12px; text-align: left; font-size: 11px; color: #64748B; border-bottom: 1px solid #E2E8F0; }
+.inc-tbl td { padding: 5px 12px; border-bottom: 1px solid #F1F5F9; }
+.inc-tbl tr:last-child td { border-bottom: none; }
+.inc-tbl code { background: #F1F5F9; padding: 1px 5px; border-radius: 3px; }
+
+/* ---- visibility badges ---- */
+.vis {
+  font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 8px;
+  display: inline-block;
+}
+.vis-public    { background: #DBEAFE; color: #1D4ED8; }
+.vis-private   { background: #FEE2E2; color: #B91C1C; }
+.vis-interface { background: #F3E8FF; color: #7E22CE; }
+
+/* same for detail panel */
+.vis-badge { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 8px; display: inline-block; }
+.vis-badge.vis-public    { background: #DBEAFE; color: #1D4ED8; }
+.vis-badge.vis-private   { background: #FEE2E2; color: #B91C1C; }
+.vis-badge.vis-interface { background: #F3E8FF; color: #7E22CE; }
+
+/* detail badge inline */
+.badge-inline {
+  font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 10px;
+  background: #E2E8F0; color: #334155; display: inline-block;
+}
+
+/* ---- build output cards ---- */
+.output-card { }
+.out-path { padding: 10px 14px; }
+.out-path code { background: #F1F5F9; padding: 3px 8px; border-radius: 4px; font-size: 12px; word-break: break-all; }
+.defined-in { padding: 0 14px 10px; font-size: 12px; color: #64748B; }
+.defined-in code { background: #F1F5F9; padding: 1px 5px; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>CMake Project Report</h1>
+  <p class="subtitle">Root: <code>F:\prog\cmake_view\myapp</code></p>
+  <div class="stats">
+    <span class="stat">3 target(s)</span>
+    <span class="stat">1 external dep(s)</span>
+    <span class="stat">5 CMakeLists.txt</span>
+  </div>
+</header>
+
+<nav class="tab-nav">
+  <button class="tab-btn active" data-tab="graph">Dependency Graph</button>
+  <button class="tab-btn" data-tab="filetree">File Tree</button>
+  <button class="tab-btn" data-tab="sources">Source Mapping</button>
+  <button class="tab-btn" data-tab="includes">Include Paths</button>
+  <button class="tab-btn" data-tab="outputs">Build Outputs</button>
+</nav>
+
+<main>
+  <div id="tab-graph" class="tab-content active">
+    <div class="graph-toolbar">
+      <button id="btn-zoom-in"  title="拡大 (Ctrl++)">&#xFF0B;</button>
+      <button id="btn-zoom-out" title="縮小 (Ctrl+-)">&#xFF0D;</button>
+      <div class="zoom-sep"></div>
+      <button id="btn-zoom-reset" class="btn-reset" title="表示をリセット">100%</button>
+      <span class="graph-hint">ホイールで拡大縮小 &nbsp;&#x2022;&nbsp; ドラッグで移動</span>
+    </div>
+    <div class="graph-wrap">
+      <svg id="dep-graph" viewBox="0 0 700 458" width="100%" preserveAspectRatio="xMidYMid meet" style="display:block;height:520px;min-height:240px;cursor:grab;user-select:none">
+<defs><marker id="arr" markerWidth="9" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#94A3B8"/></marker><filter id="sh" x="-20%" y="-30%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#00000025"/></filter></defs>
+<path d="M 350.0 207.0 C 350.0 239.0 432.5 255.0 432.5 287.0" stroke="#CBD5E1" stroke-width="1.8" fill="none" marker-end="url(#arr)"/>
+<path d="M 350.0 207.0 C 350.0 239.0 267.5 255.0 267.5 287.0" stroke="#CBD5E1" stroke-width="1.8" fill="none" marker-end="url(#arr)"/>
+<path d="M 350.0 91.0 C 350.0 169.4 432.5 208.6 432.5 287.0" stroke="#CBD5E1" stroke-width="1.8" fill="none" marker-end="url(#arr)"/>
+<path d="M 350.0 91.0 C 350.0 123.0 350.0 139.0 350.0 171.0" stroke="#CBD5E1" stroke-width="1.8" fill="none" marker-end="url(#arr)"/>
+<g class="node" data-name="core_lib" style="cursor:pointer">
+<rect x="367.5" y="287.0" width="130" height="36" rx="7" fill="#22C55E" filter="url(#sh)"/>
+<rect x="367.5" y="287.0" width="5" height="36" rx="7" fill="rgba(0,0,0,0.18)"/><rect x="367.5" y="287.0" width="5" height="36" fill="rgba(0,0,0,0.18)"/>
+<text x="432.5" y="305.0" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="ui-monospace,monospace" font-size="11" font-weight="700">core_lib</text>
+</g>
+<g class="node" data-name="net_lib" style="cursor:pointer">
+<rect x="285.0" y="171.0" width="130" height="36" rx="7" fill="#F97316" filter="url(#sh)"/>
+<rect x="285.0" y="171.0" width="5" height="36" rx="7" fill="rgba(0,0,0,0.18)"/><rect x="285.0" y="171.0" width="5" height="36" fill="rgba(0,0,0,0.18)"/>
+<text x="350.0" y="189.0" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="ui-monospace,monospace" font-size="11" font-weight="700">net_lib</text>
+</g>
+<g class="node" data-name="myapp" style="cursor:pointer">
+<rect x="285.0" y="55.0" width="130" height="36" rx="7" fill="#3B82F6" filter="url(#sh)"/>
+<rect x="285.0" y="55.0" width="5" height="36" rx="7" fill="rgba(0,0,0,0.18)"/><rect x="285.0" y="55.0" width="5" height="36" fill="rgba(0,0,0,0.18)"/>
+<text x="350.0" y="73.0" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="ui-monospace,monospace" font-size="11" font-weight="700">myapp</text>
+</g>
+<g class="node" data-name="OpenSSL::SSL" style="cursor:pointer">
+<rect x="202.5" y="287.0" width="130" height="36" rx="7" fill="#94A3B8" filter="url(#sh)"/>
+<rect x="202.5" y="287.0" width="5" height="36" rx="7" fill="rgba(0,0,0,0.18)"/><rect x="202.5" y="287.0" width="5" height="36" fill="rgba(0,0,0,0.18)"/>
+<text x="267.5" y="305.0" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="ui-monospace,monospace" font-size="11" font-weight="700">OpenSSL::SSL</text>
+</g>
+<rect x="10" y="10" width="148" height="106" rx="7" fill="white" stroke="#E2E8F0" stroke-width="1" opacity="0.93"/>
+<rect x="18" y="20" width="12" height="12" rx="3" fill="#3B82F6"/><text x="36" y="30" font-family="sans-serif" font-size="11" fill="#475569">Executable</text>
+<rect x="18" y="38" width="12" height="12" rx="3" fill="#22C55E"/><text x="36" y="48" font-family="sans-serif" font-size="11" fill="#475569">Static Lib</text>
+<rect x="18" y="56" width="12" height="12" rx="3" fill="#F97316"/><text x="36" y="66" font-family="sans-serif" font-size="11" fill="#475569">Shared Lib</text>
+<rect x="18" y="74" width="12" height="12" rx="3" fill="#8B5CF6"/><text x="36" y="84" font-family="sans-serif" font-size="11" fill="#475569">Interface</text>
+<rect x="18" y="92" width="12" height="12" rx="3" fill="#94A3B8"/><text x="36" y="102" font-family="sans-serif" font-size="11" fill="#475569">External</text>
+</svg>
+    </div>
+    <div id="node-detail" class="hidden">
+      <button class="close-btn" onclick="closeDetail()">&#x2715;</button>
+      <h3 id="detail-name"></h3>
+      <div id="detail-body"></div>
+    </div>
+  </div>
+
+  <div id="tab-filetree" class="tab-content">
+    <div class="filetree"><ul class="tree-root">
+<li class="tree-dir" style="padding-left:0px"><span class="icon-dir">&#128193;</span><span class="dir-name">lib/</span><ul>
+<li class="tree-dir" style="padding-left:20px"><span class="icon-dir">&#128193;</span><span class="dir-name">core/</span><ul>
+<li class="tree-file" style="padding-left:40px"><span class="icon-cmake">&#128196;</span><span class="cmake-name">CMakeLists.txt</span><span class="file-rel">&#x2014; lib/core/CMakeLists.txt</span></li>
+</ul></li>
+<li class="tree-dir" style="padding-left:20px"><span class="icon-dir">&#128193;</span><span class="dir-name">net/</span><ul>
+<li class="tree-file" style="padding-left:40px"><span class="icon-cmake">&#128196;</span><span class="cmake-name">CMakeLists.txt</span><span class="file-rel">&#x2014; lib/net/CMakeLists.txt</span></li>
+</ul></li>
+<li class="tree-file" style="padding-left:20px"><span class="icon-cmake">&#128196;</span><span class="cmake-name">CMakeLists.txt</span><span class="file-rel">&#x2014; lib/CMakeLists.txt</span></li>
+</ul></li>
+<li class="tree-dir" style="padding-left:0px"><span class="icon-dir">&#128193;</span><span class="dir-name">src/</span><ul>
+<li class="tree-file" style="padding-left:20px"><span class="icon-cmake">&#128196;</span><span class="cmake-name">CMakeLists.txt</span><span class="file-rel">&#x2014; src/CMakeLists.txt</span></li>
+</ul></li>
+<li class="tree-file" style="padding-left:0px"><span class="icon-cmake">&#128196;</span><span class="cmake-name">CMakeLists.txt</span><span class="file-rel">&#x2014; CMakeLists.txt</span></li>
+</ul></div>
+  </div>
+
+  <div id="tab-sources" class="tab-content">
+    <div class="cards">
+<div class="card"><div class="card-hdr" style="border-left:4px solid #22C55E"><span class="card-title">core_lib</span><span class="badge" style="background:#22C55E">Static Lib</span></div>
+<ul class="src-list">
+<li><code>core.cpp</code></li>
+<li><code>utils.cpp</code></li>
+</ul>
+</div>
+<div class="card"><div class="card-hdr" style="border-left:4px solid #3B82F6"><span class="card-title">myapp</span><span class="badge" style="background:#3B82F6">Executable</span></div>
+<ul class="src-list">
+<li><code>main.cpp</code></li>
+<li><code>app.cpp</code></li>
+</ul>
+</div>
+<div class="card"><div class="card-hdr" style="border-left:4px solid #F97316"><span class="card-title">net_lib</span><span class="badge" style="background:#F97316">Shared Lib</span></div>
+<ul class="src-list">
+<li><code>http.cpp</code></li>
+</ul>
+</div>
+</div>
+  </div>
+
+  <div id="tab-includes" class="tab-content">
+    <div class="cards">
+<div class="card"><div class="card-hdr" style="border-left:4px solid #22C55E"><span class="card-title">core_lib</span><span class="badge" style="background:#22C55E">Static Lib</span></div><table class="inc-tbl"><thead><tr><th>Visibility</th><th>Path</th></tr></thead><tbody>
+<tr><td><span class="vis vis-public">PUBLIC</span></td><td><code>${CMAKE_SOURCE_DIR}/lib/core</code></td></tr>
+</tbody></table></div>
+<div class="card"><div class="card-hdr" style="border-left:4px solid #F97316"><span class="card-title">net_lib</span><span class="badge" style="background:#F97316">Shared Lib</span></div><table class="inc-tbl"><thead><tr><th>Visibility</th><th>Path</th></tr></thead><tbody>
+<tr><td><span class="vis vis-private">PRIVATE</span></td><td><code>${CMAKE_CURRENT_SOURCE_DIR}</code></td></tr>
+<tr><td><span class="vis vis-interface">INTERFACE</span></td><td><code>${CMAKE_SOURCE_DIR}/lib/net/include</code></td></tr>
+</tbody></table></div>
+</div>
+  </div>
+
+  <div id="tab-outputs" class="tab-content">
+    <div class="cards">
+<div class="card output-card"><div class="card-hdr" style="border-left:4px solid #22C55E"><span class="card-title">core_lib</span><span class="badge" style="background:#22C55E">Static Lib</span></div><div class="out-path"><code>F:\prog\cmake_view\myapp\build/lib/core/libcore_lib.a</code></div>
+<div class="defined-in">Defined in: <code>lib/core/CMakeLists.txt</code></div>
+</div>
+<div class="card output-card"><div class="card-hdr" style="border-left:4px solid #3B82F6"><span class="card-title">myapp</span><span class="badge" style="background:#3B82F6">Executable</span></div><div class="out-path"><code>F:\prog\cmake_view\myapp\build/src/myapp</code></div>
+<div class="defined-in">Defined in: <code>src/CMakeLists.txt</code></div>
+</div>
+<div class="card output-card"><div class="card-hdr" style="border-left:4px solid #F97316"><span class="card-title">net_lib</span><span class="badge" style="background:#F97316">Shared Lib</span></div><div class="out-path"><code>F:\prog\cmake_view\myapp\build/lib/net/libnet_lib.so</code></div>
+<div class="defined-in">Defined in: <code>lib/net/CMakeLists.txt</code></div>
+</div>
+</div>
+  </div>
+</main>
+
+<script>
+const NODE_DATA = {"core_lib": {"name": "core_lib", "type": "static", "typeLabel": "Static Lib", "color": "#22C55E", "sources": ["core.cpp", "utils.cpp"], "deps": [], "includes": [{"path": "${CMAKE_SOURCE_DIR}/lib/core", "visibility": "PUBLIC"}], "definedIn": "lib/core/CMakeLists.txt"}, "net_lib": {"name": "net_lib", "type": "shared", "typeLabel": "Shared Lib", "color": "#F97316", "sources": ["http.cpp"], "deps": ["core_lib", "OpenSSL::SSL"], "includes": [{"path": "${CMAKE_CURRENT_SOURCE_DIR}", "visibility": "PRIVATE"}, {"path": "${CMAKE_SOURCE_DIR}/lib/net/include", "visibility": "INTERFACE"}], "definedIn": "lib/net/CMakeLists.txt"}, "myapp": {"name": "myapp", "type": "executable", "typeLabel": "Executable", "color": "#3B82F6", "sources": ["main.cpp", "app.cpp"], "deps": ["core_lib", "net_lib"], "includes": [], "definedIn": "src/CMakeLists.txt"}, "OpenSSL::SSL": {"name": "OpenSSL::SSL", "type": "external", "typeLabel": "External", "color": "#94A3B8", "sources": [], "deps": [], "includes": [], "definedIn": "(external)"}};
+
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// Node click: delegation on SVG (drag-aware — see pan/zoom section below)
+const svg = document.getElementById('dep-graph');
+if (svg) {
+  svg.addEventListener('click', e => {
+    if (window._pzHasDragged && window._pzHasDragged()) return; // ignore drag-release
+    const g = e.target.closest('.node');
+    if (!g) return;
+    selectNode(g.dataset.name);
+  });
+}
+
+function selectNode(name) {
+  const data = NODE_DATA[name];
+  if (!data) return;
+
+  // Dim all, highlight selected
+  document.querySelectorAll('#dep-graph .node rect').forEach(r => {
+    r.style.opacity = '0.35';
+  });
+  document.querySelectorAll('#dep-graph .node').forEach(n => {
+    if (n.dataset.name === name) {
+      n.querySelectorAll('rect').forEach(r => r.style.opacity = '1');
+    }
+  });
+
+  // Populate detail panel
+  document.getElementById('detail-name').textContent = name;
+
+  const color = data.color || '#94A3B8';
+  let html = '';
+  html += `<p><strong>Type:</strong> <span class="badge-inline" style="background:${color};color:white">${data.typeLabel}</span></p>`;
+  if (data.definedIn) {
+    html += `<p><strong>Defined in:</strong> <code>${escHtml(data.definedIn)}</code></p>`;
+  }
+  if (data.sources && data.sources.length > 0) {
+    html += `<p><strong>Sources (${data.sources.length}):</strong></p><ul>`;
+    data.sources.forEach(s => { html += `<li><code>${escHtml(s)}</code></li>`; });
+    html += '</ul>';
+  }
+  if (data.deps && data.deps.length > 0) {
+    html += `<p><strong>Dependencies (${data.deps.length}):</strong></p><ul>`;
+    data.deps.forEach(d => { html += `<li><code>${escHtml(d)}</code></li>`; });
+    html += '</ul>';
+  }
+  if (data.includes && data.includes.length > 0) {
+    html += `<p><strong>Include paths (${data.includes.length}):</strong></p><ul>`;
+    data.includes.forEach(inc => {
+      const vis = inc.visibility || 'PRIVATE';
+      html += `<li><span class="vis-badge vis-${vis.toLowerCase()}">${vis}</span> <code>${escHtml(inc.path)}</code></li>`;
+    });
+    html += '</ul>';
+  }
+
+  document.getElementById('detail-body').innerHTML = html;
+  document.getElementById('node-detail').classList.remove('hidden');
+}
+
+function closeDetail() {
+  document.querySelectorAll('#dep-graph .node rect').forEach(r => {
+    r.style.opacity = '1';
+  });
+  document.getElementById('node-detail').classList.add('hidden');
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ---------------------------------------------------------------------------
+// Pan / Zoom for the dependency graph SVG
+// ---------------------------------------------------------------------------
+(function () {
+  const svg = document.getElementById('dep-graph');
+  if (!svg) return;
+
+  // Capture original viewBox for reset
+  const origVB = svg.getAttribute('viewBox').split(' ').map(Number);
+  let [vbX, vbY, vbW, vbH] = origVB;
+
+  function applyVB() {
+    svg.setAttribute('viewBox', `${vbX} ${vbY} ${vbW} ${vbH}`);
+  }
+
+  // Convert a screen point to SVG user-space coordinates,
+  // respecting the current viewBox + preserveAspectRatio transform.
+  function screenToSVG(clientX, clientY) {
+    const pt = svg.createSVGPoint();
+    pt.x = clientX;
+    pt.y = clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+
+  // Zoom around an SVG-space anchor point by `factor` (>1 = zoom out, <1 = zoom in)
+  function zoomAround(svgX, svgY, factor) {
+    vbX = svgX - (svgX - vbX) * factor;
+    vbY = svgY - (svgY - vbY) * factor;
+    vbW *= factor;
+    vbH *= factor;
+    applyVB();
+  }
+
+  // Zoom around the viewport centre (used by buttons)
+  function zoomCenter(factor) {
+    zoomAround(vbX + vbW / 2, vbY + vbH / 2, factor);
+  }
+
+  // ---- Wheel zoom ----
+  svg.addEventListener('wheel', e => {
+    e.preventDefault();
+    const anchor = screenToSVG(e.clientX, e.clientY);
+    const factor = e.deltaY > 0 ? 1.12 : 1 / 1.12;
+    zoomAround(anchor.x, anchor.y, factor);
+  }, { passive: false });
+
+  // ---- Mouse pan ----
+  let isPanning  = false;
+  let _dragged   = false;         // true if mouse moved during this press
+  let panOrigin  = null;          // SVG-space point where drag started
+  let vbAtStart  = null;          // viewBox snapshot at drag start
+  let ctmInvAtStart = null;       // CTM inverse captured at mousedown
+
+  svg.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    isPanning       = true;
+    _dragged        = false;
+    ctmInvAtStart   = svg.getScreenCTM().inverse();
+    const pt        = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    panOrigin       = pt.matrixTransform(ctmInvAtStart);
+    vbAtStart       = { x: vbX, y: vbY };
+    svg.style.cursor = 'grabbing';
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (!isPanning) return;
+    // Compute current cursor in the coordinate space captured at mousedown.
+    // Using the frozen CTM means the pan is perfectly stable even as viewBox changes.
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const cur = pt.matrixTransform(ctmInvAtStart);
+    const dx = cur.x - panOrigin.x;
+    const dy = cur.y - panOrigin.y;
+    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) _dragged = true;
+    vbX = vbAtStart.x - dx;
+    vbY = vbAtStart.y - dy;
+    applyVB();
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (!isPanning) return;
+    isPanning = false;
+    svg.style.cursor = 'grab';
+  });
+
+  // Expose drag state so the node-click handler can ignore drag-releases
+  window._pzHasDragged = () => _dragged;
+
+  // ---- Toolbar buttons ----
+  document.getElementById('btn-zoom-in')   .addEventListener('click', () => zoomCenter(1 / 1.3));
+  document.getElementById('btn-zoom-out')  .addEventListener('click', () => zoomCenter(1.3));
+  document.getElementById('btn-zoom-reset').addEventListener('click', () => {
+    [vbX, vbY, vbW, vbH] = origVB;
+    applyVB();
+  });
+
+  // ---- Keyboard shortcuts (Ctrl++  Ctrl+-  Ctrl+0) ----
+  window.addEventListener('keydown', e => {
+    if (!e.ctrlKey && !e.metaKey) return;
+    if (e.key === '=' || e.key === '+') { e.preventDefault(); zoomCenter(1 / 1.3); }
+    if (e.key === '-')                  { e.preventDefault(); zoomCenter(1.3); }
+    if (e.key === '0')                  { e.preventDefault(); [vbX, vbY, vbW, vbH] = origVB; applyVB(); }
+  });
+})();
+</script>
+</body>
+</html>
